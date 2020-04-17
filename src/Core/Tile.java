@@ -40,6 +40,12 @@ public class Tile{
 
 
 	public void draw(int x, int y){
+//		P5.color(img.pixels[0]);
+//		P5.rect(x, y, img.width, img.height);
+
+//		int scale = 12;
+//		P5.copy(img, 0, 0, 1, 1, x*scale, y*scale, scale, scale);
+
 		P5.image(img, x, y);
 	}
 

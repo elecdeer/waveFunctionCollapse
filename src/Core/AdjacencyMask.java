@@ -8,14 +8,15 @@ import java.util.List;
  * Tile同士が隣接可能かどうかのMaskマップ
  */
 public class AdjacencyMask{
-
-
 	private boolean[] mask;
 
 	public AdjacencyMask(int num){
 		mask = new boolean[num];
-		Arrays.fill(mask, true);
+		fill(true);
+	}
 
+	public void fill(boolean b){
+		Arrays.fill(mask, b);
 	}
 
 	public boolean[] getMask(){
@@ -34,9 +35,23 @@ public class AdjacencyMask{
 	public AdjacencyMask createAndMask(AdjacencyMask adjacencyMask){
 		AdjacencyMask andMask = new AdjacencyMask(mask.length);
 		for(int i = 0; i < mask.length; i++){
-			andMask.set(i, getMask()[i] & adjacencyMask.getMask()[i]);
+			andMask.set(i, mask[i] & adjacencyMask.mask[i]);
 		}
 		return andMask;
+	}
+
+	/**
+	 * このマスクと引数のマスクとでorを取ったマスクを新しく生成して返す
+	 * @param adjacencyMask
+	 * @return
+	 */
+	public AdjacencyMask createOrMask(AdjacencyMask adjacencyMask){
+		AdjacencyMask orMask = new AdjacencyMask(mask.length);
+		orMask.fill(false);
+		for(int i = 0; i < mask.length; i++){
+			orMask.set(i, mask[i] | adjacencyMask.mask[i]);
+		}
+		return orMask;
 	}
 
 	/**
@@ -45,8 +60,8 @@ public class AdjacencyMask{
 	 */
 	public int getEntropy(){
 		int entropy = 0;
-		for(int i = 0; i < getMask().length; i++){
-			if(getMask()[i]) entropy++;
+		for(int i = 0; i < mask.length; i++){
+			if(mask[i]) entropy++;
 		}
 		return entropy;
 	}
@@ -57,8 +72,8 @@ public class AdjacencyMask{
 	 */
 	public List<Integer> getValidTileIDList(){
 		List<Integer> list = new ArrayList<>();
-		for(int i = 0; i < getMask().length; i++){
-			if(getMask()[i]) list.add(i);
+		for(int i = 0; i < mask.length; i++){
+			if(mask[i]) list.add(i);
 		}
 		return list;
 	}
@@ -71,4 +86,27 @@ public class AdjacencyMask{
 		List<Integer> list = getValidTileIDList();
 		return list.get(Main.random.nextInt(list.size()));
 	}
+
+	/**
+	 * 同一のマスクかどうか
+	 * @param adjacencyMask
+	 * @return
+	 */
+	public boolean isSameMask(AdjacencyMask adjacencyMask){
+		for(int i = 0; i < mask.length; i++){
+			if(mask[i] != adjacencyMask.mask[i]) return false;
+		}
+		return true;
+	}
+
+
+	public String toString(){
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0; i < mask.length; i++){
+			sb.append(mask[i] ? 'o' : 'x');
+		}
+		return sb.toString();
+	}
+
+
 }
