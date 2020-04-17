@@ -12,7 +12,7 @@ public class Main extends PApplet{
 	public static final int TILE_SIZE = 3;
 	public static PApplet P5;
 
-	public static Random random = new Random(5555);
+	public static Random random = new Random();
 
 	//チューニングできそうなところ
 	//マスク取る部分をbit演算?
@@ -38,7 +38,7 @@ public class Main extends PApplet{
 
 		setupTileMap("resources/MoreFlowers.png", TILE_SIZE);
 
-		frameRate(3000);
+		frameRate(1000);
 
 	}
 
@@ -46,20 +46,19 @@ public class Main extends PApplet{
 		System.out.println("setupTileMap");
 		PImage sourceImg = loadImage(imgName);
 
-		tileList = new ArrayList<>();
+		BasicTileMapper tileMapper = new BasicTileMapper(sourceImg, tileSize);
 
-		//元画像からのタイル切り出し
-		for(int y = 0; y < sourceImg.height - 2; y++){
-			for(int x = 0; x < sourceImg.width - 2; x++){
-				Tile tile = new Tile(sourceImg, tileList.size(), tileSize, x, y);
-				tileList.add(tile);
+		tileMapper.enableHorizonFlip();
 
-//				tile.draw(x*(tileSize+1), y*(tileSize+1));
-			}
-		}
+		tileMapper.constructTileMap();
 
-		//隣接関係の構築
-		tileList.forEach(tile -> tile.setUpAdjacency(tileList));
+		tileList = tileMapper.toTileList();
+
+//		tileMapper
+
+
+//		image(sourceImg, 0, 0);
+
 
 //		System.out.println(tileList.get(0).getAdjacency(3).getValidTileIDList());
 

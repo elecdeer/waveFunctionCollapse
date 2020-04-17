@@ -15,13 +15,22 @@ public class Tile{
 
 	private AdjacencyMask[] adjacency;
 
+
+	public Tile(PImage tileImg, int id){
+		this.id = id;
+		this.img = tileImg;
+	}
+
+	@Deprecated
 	public Tile(PImage sourceImg, int id, int size, int offsetX, int offsetY){
 		this.id = id;
 
 
 		img = P5.createImage(size, size, RGB);
+
 		img.copy(sourceImg, offsetX, offsetY, size, size, 0, 0, size, size);
 		img.loadPixels();
+
 //		System.out.println("Tile pix:" + img.pixels.length);
 	}
 
