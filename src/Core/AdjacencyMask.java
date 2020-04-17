@@ -1,17 +1,25 @@
 package Core;
 
+import processing.core.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
+
+import static Core.Main.P5;
 
 /**
  * Tile同士が隣接可能かどうかのMaskマップ
  */
 public class AdjacencyMask{
 	private boolean[] mask;
+	private int[] weight;
 
 	public AdjacencyMask(int num){
 		mask = new boolean[num];
+		weight = new int[num];
+		Arrays.fill(weight, 1);
+
 		fill(true);
 	}
 
@@ -27,32 +35,54 @@ public class AdjacencyMask{
 		mask[tileID] = flag;
 	}
 
-	/**
-	 * このマスクと引数のマスクとでandを取ったマスクを新しく生成して返す
-	 * @param adjacencyMask
-	 * @return
-	 */
-	public AdjacencyMask createAndMask(AdjacencyMask adjacencyMask){
-		AdjacencyMask andMask = new AdjacencyMask(mask.length);
-		for(int i = 0; i < mask.length; i++){
-			andMask.set(i, mask[i] & adjacencyMask.mask[i]);
+	public void set(int tileID, boolean flag, int weightVal){
+		set(tileID, flag);
+		weight[tileID] = weightVal;
+	}
+
+	public static AdjacencyMask and(AdjacencyMask maskA, AdjacencyMask maskB){
+		int length = maskA.mask.length;
+
+		AdjacencyMask andMask = new AdjacencyMask(length);
+		andMask.fill(true);
+		for(int i = 0; i < length; i++){
+			andMask.set(i, maskA.mask[i] & maskB.mask[i], Math.max(maskA.weight[i], maskB.weight[i]));
 		}
 		return andMask;
 	}
 
-	/**
-	 * このマスクと引数のマスクとでorを取ったマスクを新しく生成して返す
-	 * @param adjacencyMask
-	 * @return
-	 */
-	public AdjacencyMask createOrMask(AdjacencyMask adjacencyMask){
-		AdjacencyMask orMask = new AdjacencyMask(mask.length);
+	public static AdjacencyMask or(AdjacencyMask maskA, AdjacencyMask maskB){
+		int length = maskA.mask.length;
+
+		AdjacencyMask orMask = new AdjacencyMask(length);
 		orMask.fill(false);
-		for(int i = 0; i < mask.length; i++){
-			orMask.set(i, mask[i] | adjacencyMask.mask[i]);
+		for(int i = 0; i < length; i++){
+			orMask.set(i, maskA.mask[i] | maskB.mask[i], Math.max(maskA.weight[i], maskB.weight[i]));
 		}
 		return orMask;
 	}
+
+	public static AdjacencyMask or(List<AdjacencyMask> maskList){
+
+		AdjacencyMask orMask = maskList.get(0);
+
+//		for(int i = 1; i < maskList.size(); i++){
+//			orMask = or(orMask, maskList.get(i));
+//		}
+
+		orMask.fill(false);
+		for(int i = 0; i < orMask.mask.length; i++){
+			for(AdjacencyMask adjacencyMask : maskList){
+				if(adjacencyMask.mask[i]){
+					orMask.set(i, true, adjacencyMask.weight[i]);
+					continue;
+				}
+			}
+		}
+		return orMask;
+	}
+
+
 
 	/**
 	 * trueの数を返す
@@ -61,7 +91,7 @@ public class AdjacencyMask{
 	public int getEntropy(){
 		int entropy = 0;
 		for(int i = 0; i < mask.length; i++){
-			if(mask[i]) entropy++;
+			if(mask[i]) entropy += weight[i];
 		}
 		return entropy;
 	}
@@ -84,7 +114,30 @@ public class AdjacencyMask{
 	 */
 	public int getRandomValidId(){
 		List<Integer> list = getValidTileIDList();
-		return list.get(Main.random.nextInt(list.size()));
+
+		System.out.println(list);
+
+//		list.stream()
+
+		int sumWeight = 0;
+		for(int id : list){
+			sumWeight += weight[id];
+		}
+
+		float rand = Main.random.nextFloat() * sumWeight;
+		int area = 0;
+
+		for(int id : list){
+			area += weight[id];
+			if(area >= rand){
+				return id;
+			}
+		}
+
+		return -1;
+
+//		List<Integer> list = getValidTileIDList();
+//		return list.get(Main.random.nextInt(list.size()));
 	}
 
 	/**

@@ -4,6 +4,7 @@ import processing.core.*;
 import processing.opengl.PGraphicsOpenGL;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ public class Main extends PApplet{
 	//チューニングできそうなところ
 	//マスク取る部分をbit演算?
 	//composePropagationWaveのvalidIDリスト取る部分で、パターンが重複しているのは省く
+	//
 
 	@Override
 	public void settings(){
@@ -48,11 +50,16 @@ public class Main extends PApplet{
 
 		BasicTileMapper tileMapper = new BasicTileMapper(sourceImg, tileSize);
 
+		tileMapper.ignoreSamePattern(true);
 		tileMapper.enableHorizonFlip();
+//		tileMapper.enableVerticalFlip();
+//		tileMapper.enableRotation();
 
 		tileMapper.constructTileMap();
 
 		tileList = tileMapper.toTileList();
+
+//		tileList.get(0).overlapWeight = 1;
 
 //		tileMapper
 
@@ -124,17 +131,18 @@ public class Main extends PApplet{
 		//最小エントロピーなマスの算出
 		int minEntropy = Integer.MAX_VALUE;
 
-		List<Mass> targetMassList = massList
-				.stream()
-				.filter(mass -> ! mass.isCollapsed())
-				.collect(Collectors.toList());
+//		List<Mass> targetMassList = massList
+//				.stream()
+//				.filter(mass -> ! mass.isCollapsed())
+//				.collect(Collectors.toList());
 
-		for(Mass mass : targetMassList){
+
+		for(Mass mass : massList){
 			minEntropy = min(minEntropy, mass.getEntropy());
 		}
 
 		int finalMinEntropy = minEntropy;
-		List<Mass> selections = targetMassList
+		List<Mass> selections = massList
 				.stream()
 				.filter(mass -> mass.getEntropy() == finalMinEntropy)
 				.collect(Collectors.toList());
@@ -146,13 +154,15 @@ public class Main extends PApplet{
 		//そのマスのタイルを確定
 		selectedMass.collapseWave(tileList);
 
-//		System.out.printf("selectedMass (%d,%d) -> %d\n", selectedMass.getMassX(), selectedMass.getMassY(), selectedMass.getCollapsedTile().id);
+		massList.remove(selectedMass);
 
-		//周囲に伝搬
+		System.out.printf("selectedMass (%d,%d) -> %d\n", selectedMass.getMassX(), selectedMass.getMassY(), selectedMass.getCollapsedTile().id);
+
 //		propagation(selectedMass.getMassX(), selectedMass.getMassY(), selectedMass.getWave());
 
 		propagationCount = 0;
 
+		//周囲に伝搬
 		int x = selectedMass.getMassX();
 		int y = selectedMass.getMassY();
 		propagation(x  , y-1, selectedMass.getCollapsedTile().getAdjacency(0));
@@ -163,7 +173,7 @@ public class Main extends PApplet{
 		System.out.println("propagationCount = " + propagationCount);
 
 		//Entropyの再計算
-		for(Mass mass : targetMassList){
+		for(Mass mass : massList){
 			mass.calcEntropy();
 		}
 	}

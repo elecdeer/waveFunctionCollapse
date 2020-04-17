@@ -17,10 +17,20 @@ public class BasicTileMapper extends TileMapper{
 	private boolean horizonFlip = false;
 	private boolean verticalFlip = false;
 	private boolean rotation = false;
+	private boolean ignoreSamePattern = false;
 
 	public BasicTileMapper(PImage sourceImg, int tileSize){
 		this.sourceImg = sourceImg;
 		this.tileSize = tileSize;
+	}
+
+	/**
+	 * 同じパターンのタイルを完全に無視するかどうか
+	 *
+	 * @param set
+	 */
+	public void ignoreSamePattern(boolean set){
+		ignoreSamePattern = set;
 	}
 
 	public void enableHorizonFlip(){
@@ -36,8 +46,6 @@ public class BasicTileMapper extends TileMapper{
 	}
 
 
-
-
 	@Override
 	public void constructTileMap(){
 
@@ -49,33 +57,50 @@ public class BasicTileMapper extends TileMapper{
 				PImage tileImg = P5.createImage(tileSize, tileSize, RGB);
 				tileImg.copy(sourceImg, x, y, tileSize, tileSize, 0, 0, tileSize, tileSize);
 
-				tileList.add(createTile(tileImg));
+				addTile(tileImg);
 
 				if(rotation){
-					tileList.add(createTile(imgLeftTurn(tileImg, 1)));
-					tileList.add(createTile(imgLeftTurn(tileImg, 2)));
-					tileList.add(createTile(imgLeftTurn(tileImg, 3)));
+					addTile(imgLeftTurn(tileImg, 1));
+					addTile(imgLeftTurn(tileImg, 2));
+					addTile(imgLeftTurn(tileImg, 3));
 				}
 
 				if(horizonFlip){
-					tileList.add(createTile(imgHorizonFlip(tileImg)));
+					addTile(imgHorizonFlip(tileImg));
 				}
 
 				if(verticalFlip){
-					tileList.add(createTile(imgVerticalFlip(tileImg)));
+					addTile(imgVerticalFlip(tileImg));
 				}
 
 			}
 		}
 
+		tileList.forEach(tile -> {
+			System.out.printf("%3d over:%3d\n", tile.id, tile.overlapWeight);
+		});
 
 		//隣接関係の構築
 		tileList.forEach(tile -> tile.setUpAdjacency(tileList));
 	}
 
 	private int index = 0;
-	private Tile createTile(PImage tileImg){
-		return new Tile(tileImg, index++);
+
+	private void addTile(PImage tileImg){
+		Tile addTile = new Tile(tileImg, index);
+
+		for(Tile tile: tileList){
+			//重複している
+			if(tile.isSamePattern(addTile)){
+				if(! ignoreSamePattern){
+					tile.countOverlap();
+				}
+
+				return;
+			}
+		}
+		tileList.add(addTile);
+		index++;
 	}
 
 	public PImage imgHorizonFlip(PImage sourceImg){

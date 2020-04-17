@@ -5,10 +5,10 @@ import processing.core.*;
 import java.util.List;
 
 import static Core.Main.P5;
-import static processing.core.PConstants.RGB;
 
 public class Tile{
 	public int id;
+	public int overlapWeight = 1;
 
 	private PImage img;
 
@@ -21,17 +21,8 @@ public class Tile{
 		this.img = tileImg;
 	}
 
-	@Deprecated
-	public Tile(PImage sourceImg, int id, int size, int offsetX, int offsetY){
-		this.id = id;
-
-
-		img = P5.createImage(size, size, RGB);
-
-		img.copy(sourceImg, offsetX, offsetY, size, size, 0, 0, size, size);
-		img.loadPixels();
-
-//		System.out.println("Tile pix:" + img.pixels.length);
+	public void countOverlap(){
+		overlapWeight++;
 	}
 
 	public void setUpAdjacency(List<Tile> tileList){
@@ -41,10 +32,15 @@ public class Tile{
 			adjacency[i] = new AdjacencyMask(tileList.size());
 		}
 
-		tileList.forEach(tile -> adjacency[0].set(tile.id, canAdjacencyTop(tile)));
-		tileList.forEach(tile -> adjacency[1].set(tile.id, canAdjacencyBottom(tile)));
-		tileList.forEach(tile -> adjacency[2].set(tile.id, canAdjacencyLeft(tile)));
-		tileList.forEach(tile -> adjacency[3].set(tile.id, canAdjacencyRight(tile)));
+		tileList.forEach(tile -> {
+			int weight = tile.overlapWeight;
+//
+			adjacency[0].set(tile.id, canAdjacencyTop(tile), weight);
+			adjacency[1].set(tile.id, canAdjacencyBottom(tile), weight);
+			adjacency[2].set(tile.id, canAdjacencyLeft(tile), weight);
+			adjacency[3].set(tile.id, canAdjacencyRight(tile), weight);
+		});
+
 	}
 
 
@@ -75,7 +71,7 @@ public class Tile{
 	}
 
 
-	public boolean isSameColor(int colorA, int colorB){
+	public boolean isDifferentColor(int colorA, int colorB){
 		return colorA != colorB;
 	}
 
@@ -87,7 +83,7 @@ public class Tile{
 				int colorA = getPixel(i, j, 1, 0);
 				int colorB = targetTile.getPixel(i, j, 0, 0);
 
-				if(isSameColor(colorA, colorB)) return false;
+				if(isDifferentColor(colorA, colorB)) return false;
 			}
 		}
 		return true;
@@ -100,7 +96,7 @@ public class Tile{
 				int colorA = getPixel(i, j, 0, 0);
 				int colorB = targetTile.getPixel(i, j, 1, 0);
 
-				if(isSameColor(colorA, colorB)) return false;
+				if(isDifferentColor(colorA, colorB)) return false;
 			}
 		}
 		return true;
@@ -112,7 +108,7 @@ public class Tile{
 				int colorA = getPixel(i, j, 0, 0);
 				int colorB = targetTile.getPixel(i, j, 0, 1);
 
-				if(isSameColor(colorA, colorB)) return false;
+				if(isDifferentColor(colorA, colorB)) return false;
 			}
 		}
 		return true;
@@ -124,7 +120,7 @@ public class Tile{
 				int colorA = getPixel(i, j, 0, 1);
 				int colorB = targetTile.getPixel(i, j, 0, 0);
 
-				if(isSameColor(colorA, colorB)) return false;
+				if(isDifferentColor(colorA, colorB)) return false;
 			}
 		}
 		return true;
@@ -137,7 +133,7 @@ public class Tile{
 				int colorA = getPixel(i, j, 0, 0);
 				int colorB = targetTile.getPixel(i, j, 0, 0);
 
-				if(isSameColor(colorA, colorB)) return false;
+				if(isDifferentColor(colorA, colorB)) return false;
 			}
 		}
 		return true;

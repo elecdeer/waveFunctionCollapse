@@ -3,6 +3,7 @@ package Core;
 import processing.core.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static Core.Main.P5;
 
@@ -57,7 +58,8 @@ public class Mass{
 //		System.out.println("wave");
 //		System.out.println(wave.toString());
 
-		AdjacencyMask nextWave = wave.createAndMask(restrictWave);
+
+		AdjacencyMask nextWave = AdjacencyMask.and(wave, restrictWave);
 
 //		System.out.println("andWave");
 //		System.out.println(nextWave.toString());
@@ -89,15 +91,22 @@ public class Mass{
 
 //		System.out.println(wave.getValidTileIDList());
 
+
 		for(int tileID : wave.getValidTileIDList()){
 //			System.out.println(tileList.get(tileID).getAdjacency(dir).toString());
-			mask = mask.createOrMask(tileList.get(tileID).getAdjacency(dir));
+			mask = AdjacencyMask.or(mask, tileList.get(tileID).getAdjacency(dir));
+//			mask = mask.createOrMask(tileList.get(tileID).getAdjacency(dir));
 		}
+
+
 
 //		System.out.println("result:");
 //		System.out.println(mask.toString());
 
 		return mask;
+
+
+//		return AdjacencyMask.or(wave.getValidTileIDList().stream().map(id -> tileList.get(id).getAdjacency(dir)).collect(Collectors.toList()));
 	}
 
 
