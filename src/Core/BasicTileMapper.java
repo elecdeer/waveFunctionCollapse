@@ -26,21 +26,30 @@ public class BasicTileMapper extends TileMapper{
 
 	/**
 	 * 同じパターンのタイルを完全に無視するかどうか
-	 *
+	 * trueにすると出現回数による重み付けがされなくなる
 	 * @param set
 	 */
 	public void ignoreSamePattern(boolean set){
 		ignoreSamePattern = set;
 	}
 
+	/**
+	 * 水平反転を追加
+	 */
 	public void enableHorizonFlip(){
 		horizonFlip = true;
 	}
 
+	/**
+	 * 垂直反転を追加
+	 */
 	public void enableVerticalFlip(){
 		verticalFlip = true;
 	}
 
+	/**
+	 * 回転タイルを追加
+	 */
 	public void enableRotation(){
 		rotation = true;
 	}

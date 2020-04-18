@@ -115,9 +115,9 @@ public class AdjacencyMask{
 	public int getRandomValidId(){
 		List<Integer> list = getValidTileIDList();
 
-		System.out.println(list);
+//		System.out.println(list);
 
-//		list.stream()
+		//重み付けランダム抽出
 
 		int sumWeight = 0;
 		for(int id : list){

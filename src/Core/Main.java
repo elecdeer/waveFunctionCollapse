@@ -9,16 +9,13 @@ import java.util.stream.Collectors;
 public class Main extends PApplet{
 
 	public static final int TILE_SIZE = 3;
+	public static final int MASS_NUM = 100;
 	public static PApplet P5;
 
 	public static Random random = new Random();
 
 	//チューニングできそうなところ
 	//マスク取る部分をbit演算?
-	//composePropagationWaveのvalidIDリスト取る部分で、パターンが重複しているのは省く
-	//
-	//伝搬を幅優先にする
-	//キューで実装 すでにキューに入っているマスは二重で追加しない
 
 	@Override
 	public void settings(){
@@ -32,13 +29,13 @@ public class Main extends PApplet{
 	@Override
 	public void setup(){
 //		random.
-		scale(12);
+		scale(6);
 
 		((PGraphicsOpenGL) g).textureSampling(2);
 
 		background(20);
 
-		setupTileMap("resources/Office.png", TILE_SIZE);
+		setupTileMap("resources/Mazelike.png", TILE_SIZE);
 
 		frameRate(1000);
 
@@ -61,20 +58,6 @@ public class Main extends PApplet{
 
 		tileList = tileMapper.toTileList();
 
-//		tileList.get(0).overlapWeight = 1;
-
-
-//		image(sourceImg, 0, 0);
-
-
-//		System.out.println(tileList.get(0).getAdjacency(3).getValidTileIDList());
-
-//		int x = 0;
-//		for(int i : tileList.get(0).getAdjacency(3).getValidTileIDList()){
-//			tileList.get(i).draw(5 + (x++)*5, 100);
-//		}
-
-		//		List<AdjacencyMask> maskList
 
 		setupGenerate();
 
@@ -85,7 +68,6 @@ public class Main extends PApplet{
 	private List<Mass> massList;
 
 
-	public static final int MASS_NUM = 50;
 
 	private void setupGenerate(){
 		massGrid = new Mass[MASS_NUM][MASS_NUM];
@@ -103,8 +85,8 @@ public class Main extends PApplet{
 	@Override
 	public void draw(){
 
-		scale(12);
-		background(20);
+		scale(6);
+
 		if(step == 0){
 			delay(1000);
 		}
@@ -114,11 +96,16 @@ public class Main extends PApplet{
 
 		}
 
-		for(int x = 0; x < MASS_NUM; x++){
-			for(int y = 0; y < MASS_NUM; y++){
-				massGrid[x][y].draw(x, y, TILE_SIZE);
+		if(step % 20 == 0){
+			background(20);
+			for(int x = 0; x < MASS_NUM; x++){
+				for(int y = 0; y < MASS_NUM; y++){
+					massGrid[x][y].draw(x, y, TILE_SIZE);
+				}
 			}
 		}
+
+
 
 	}
 
@@ -132,15 +119,8 @@ public class Main extends PApplet{
 		System.out.printf("### %d generateStep\n", step++);
 
 
-		//エントロピー最小のマスを選ぶ
 		//最小エントロピーなマスの算出
 		int minEntropy = Integer.MAX_VALUE;
-
-//		List<Mass> targetMassList = massList
-//				.stream()
-//				.filter(mass -> ! mass.isCollapsed())
-//				.collect(Collectors.toList());
-
 
 		for(Mass mass : massList){
 			minEntropy = min(minEntropy, mass.getEntropy());
@@ -170,10 +150,6 @@ public class Main extends PApplet{
 		//周囲に伝搬
 		int x = selectedMass.getMassX();
 		int y = selectedMass.getMassY();
-//		propagation(x  , y-1, selectedMass.getCollapsedTile().getAdjacency(0));
-//		propagation(x  , y+1, selectedMass.getCollapsedTile().getAdjacency(1));
-//		propagation(x-1, y,   selectedMass.getCollapsedTile().getAdjacency(2));
-//		propagation(x+1, y,   selectedMass.getCollapsedTile().getAdjacency(3));
 
 		taskQueue = new LinkedList<>();
 
@@ -247,7 +223,6 @@ public class Main extends PApplet{
 //		System.out.printf("propagation(%d,%d)\n", x, y);
 //		System.out.println(wave.toString());
 
-		//伝搬を幅優先にする
 
 		boolean changed = mass.restrictWave(wave);
 		//変化があったら周囲に伝搬
@@ -256,11 +231,6 @@ public class Main extends PApplet{
 			offerTask(x  , y+1, mass.composePropagationWave(1, tileList));
 			offerTask(x-1, y,   mass.composePropagationWave(2, tileList));
 			offerTask(x+1, y,   mass.composePropagationWave(3, tileList));
-
-//			propagation(x  , y-1, mass.composePropagationWave(0, tileList));
-//			propagation(x  , y+1, mass.composePropagationWave(1, tileList));
-//			propagation(x-1, y,   mass.composePropagationWave(2, tileList));
-//			propagation(x+1, y,   mass.composePropagationWave(3, tileList));
 		}
 	}
 

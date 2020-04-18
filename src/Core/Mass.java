@@ -85,26 +85,14 @@ public class Mass{
 	 * @param dir
 	 */
 	public AdjacencyMask composePropagationWave(int dir, List<Tile> tileList){
-//		System.out.println("composePropagationWave");
 		AdjacencyMask mask = new AdjacencyMask(wave.getMask().length);
 		mask.fill(false);
 
-//		System.out.println(wave.getValidTileIDList());
-
-
 		for(int tileID : wave.getValidTileIDList()){
-//			System.out.println(tileList.get(tileID).getAdjacency(dir).toString());
 			mask = AdjacencyMask.or(mask, tileList.get(tileID).getAdjacency(dir));
-//			mask = mask.createOrMask(tileList.get(tileID).getAdjacency(dir));
 		}
 
-
-
-//		System.out.println("result:");
-//		System.out.println(mask.toString());
-
 		return mask;
-
 
 //		return AdjacencyMask.or(wave.getValidTileIDList().stream().map(id -> tileList.get(id).getAdjacency(dir)).collect(Collectors.toList()));
 	}
