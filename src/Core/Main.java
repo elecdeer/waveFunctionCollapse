@@ -3,13 +3,11 @@ package Core;
 import processing.core.*;
 import processing.opengl.PGraphicsOpenGL;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Main extends PApplet{
+
 	public static final int TILE_SIZE = 3;
 	public static PApplet P5;
 
@@ -19,6 +17,8 @@ public class Main extends PApplet{
 	//マスク取る部分をbit演算?
 	//composePropagationWaveのvalidIDリスト取る部分で、パターンが重複しているのは省く
 	//
+	//伝搬を幅優先にする
+	//キューで実装 すでにキューに入っているマスは二重で追加しない
 
 	@Override
 	public void settings(){
@@ -36,9 +36,9 @@ public class Main extends PApplet{
 
 		((PGraphicsOpenGL) g).textureSampling(2);
 
-		background(0);
+		background(20);
 
-		setupTileMap("resources/MoreFlowers.png", TILE_SIZE);
+		setupTileMap("resources/Office.png", TILE_SIZE);
 
 		frameRate(1000);
 
@@ -48,20 +48,20 @@ public class Main extends PApplet{
 		System.out.println("setupTileMap");
 		PImage sourceImg = loadImage(imgName);
 
+		image(sourceImg, 0, 0);
+
 		BasicTileMapper tileMapper = new BasicTileMapper(sourceImg, tileSize);
 
-		tileMapper.ignoreSamePattern(true);
+		tileMapper.ignoreSamePattern(false);
 		tileMapper.enableHorizonFlip();
-//		tileMapper.enableVerticalFlip();
-//		tileMapper.enableRotation();
+		tileMapper.enableVerticalFlip();
+		tileMapper.enableRotation();
 
 		tileMapper.constructTileMap();
 
 		tileList = tileMapper.toTileList();
 
 //		tileList.get(0).overlapWeight = 1;
-
-//		tileMapper
 
 
 //		image(sourceImg, 0, 0);
@@ -104,7 +104,10 @@ public class Main extends PApplet{
 	public void draw(){
 
 		scale(12);
-		background(0);
+		background(20);
+		if(step == 0){
+			delay(1000);
+		}
 		if(step < MASS_NUM*MASS_NUM){
 			generateStep();
 		}else{
@@ -122,6 +125,8 @@ public class Main extends PApplet{
 
 	private int step = 0;
 	private int propagationCount = 0;
+
+	private LinkedList<PropagationTask> taskQueue;
 
 	public void generateStep(){
 		System.out.printf("### %d generateStep\n", step++);
@@ -165,10 +170,22 @@ public class Main extends PApplet{
 		//周囲に伝搬
 		int x = selectedMass.getMassX();
 		int y = selectedMass.getMassY();
-		propagation(x  , y-1, selectedMass.getCollapsedTile().getAdjacency(0));
-		propagation(x  , y+1, selectedMass.getCollapsedTile().getAdjacency(1));
-		propagation(x-1, y,   selectedMass.getCollapsedTile().getAdjacency(2));
-		propagation(x+1, y,   selectedMass.getCollapsedTile().getAdjacency(3));
+//		propagation(x  , y-1, selectedMass.getCollapsedTile().getAdjacency(0));
+//		propagation(x  , y+1, selectedMass.getCollapsedTile().getAdjacency(1));
+//		propagation(x-1, y,   selectedMass.getCollapsedTile().getAdjacency(2));
+//		propagation(x+1, y,   selectedMass.getCollapsedTile().getAdjacency(3));
+
+		taskQueue = new LinkedList<>();
+
+		offerTask(x, y - 1, selectedMass.getCollapsedTile().getAdjacency(0));
+		offerTask(x  , y+1, selectedMass.getCollapsedTile().getAdjacency(1));
+		offerTask(x-1, y,   selectedMass.getCollapsedTile().getAdjacency(2));
+		offerTask(x+1, y,   selectedMass.getCollapsedTile().getAdjacency(3));
+
+		while(! taskQueue.isEmpty()){
+			PropagationTask task = taskQueue.poll();
+			propagation(task.x, task.y, task.wave);
+		}
 
 		System.out.println("propagationCount = " + propagationCount);
 
@@ -177,6 +194,39 @@ public class Main extends PApplet{
 			mass.calcEntropy();
 		}
 	}
+
+	private void offerTask(int x, int y, AdjacencyMask wave){
+		for(PropagationTask task : taskQueue){
+			//すでに同じマスのタスクがある
+			if(task.isSamePosTask(x, y)){
+				task.compositeTask(wave);
+				return;
+			}
+		}
+
+		taskQueue.offer(new PropagationTask(x, y, wave));
+	}
+
+	private class PropagationTask{
+		public final int x;
+		public final int y;
+		public AdjacencyMask wave;
+
+		public PropagationTask(int x, int y, AdjacencyMask wave){
+			this.x = x;
+			this.y = y;
+			this.wave = wave;
+		}
+
+		public boolean isSamePosTask(int posX, int posY){
+			return x == posX && y == posY;
+		}
+
+		public void compositeTask(AdjacencyMask compositeWave){
+			this.wave = AdjacencyMask.and(wave, compositeWave);
+		}
+	}
+
 
 	/**
 	 * 再帰的にwaveを伝搬する
@@ -197,15 +247,20 @@ public class Main extends PApplet{
 //		System.out.printf("propagation(%d,%d)\n", x, y);
 //		System.out.println(wave.toString());
 
-
+		//伝搬を幅優先にする
 
 		boolean changed = mass.restrictWave(wave);
 		//変化があったら周囲に伝搬
 		if(changed){
-			propagation(x  , y-1, mass.composePropagationWave(0, tileList));
-			propagation(x  , y+1, mass.composePropagationWave(1, tileList));
-			propagation(x-1, y,   mass.composePropagationWave(2, tileList));
-			propagation(x+1, y,   mass.composePropagationWave(3, tileList));
+			offerTask(x  , y-1, mass.composePropagationWave(0, tileList));
+			offerTask(x  , y+1, mass.composePropagationWave(1, tileList));
+			offerTask(x-1, y,   mass.composePropagationWave(2, tileList));
+			offerTask(x+1, y,   mass.composePropagationWave(3, tileList));
+
+//			propagation(x  , y-1, mass.composePropagationWave(0, tileList));
+//			propagation(x  , y+1, mass.composePropagationWave(1, tileList));
+//			propagation(x-1, y,   mass.composePropagationWave(2, tileList));
+//			propagation(x+1, y,   mass.composePropagationWave(3, tileList));
 		}
 	}
 
